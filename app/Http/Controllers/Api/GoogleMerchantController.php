@@ -8,22 +8,17 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class GoogleMerchantController extends Controller
 {
-    private const SOURCE_API = 'https://hanaball.devaito.com/api/fetch-all-products';
-
-    /**
-     * GET /api/google
-     * Renvoie directement le CSV pour Google Merchant Center
-     */
     public function __invoke(): StreamedResponse
     {
         return new StreamedResponse(function() {
-            $resp = Http::timeout(30)->get(self::SOURCE_API);
+            $resp = Http::timeout(30)->get('https://hanaball.devaito.com/api/fetch-all-products');
             if (! $resp->successful()) {
-                abort(502, 'API source inaccessible');
+                abort(502, 'API Devaito inaccessible');
             }
             $products = $resp->json()['products'] ?? [];
+            $out = fopen('php://output', 'w');
 
-            $out = fopen('php://output','w');
+            // CSV header
             fputcsv($out, [
                 'id','title','description','link','image_link',
                 'availability','price','condition','brand','gtin',
@@ -38,19 +33,37 @@ class GoogleMerchantController extends Controller
             ];
 
             foreach ($products as $p) {
-                $sale = '';
-                if (!empty($p['discount_amount'])) {
-                    $sale = number_format($p['price'] - $p['discount_amount'],2).' '.$p['devise'];
-                }
-                $type = '';
-                $gc   = 'Business & Industrial';
+                $id    = $p['id'] ?? 'NAN';
+                $title = $p['name'] ?? 'NAN';
+                $link  = $p['url'] ?? 'NAN';
+                $img   = $p['image'] ?? 'NAN';
+
+                $avail = 'in stock';
+                $price = isset($p['price']) 
+                         ? number_format($p['price'],2).' '.$p['devise'] 
+                         : 'NAN';
+                $cond  = 'new';
+                $brand = $p['brand_name'] ?? 'NAN';
+                $gtin  = 'NAN';
+                $mpn   = $p['slug'] ?? 'NAN';
+                $ident = empty($p['brand_name']) ? 'FALSE' : 'TRUE';
+
+                $sale = !empty($p['discount_amount'])
+                        ? number_format($p['price'] - $p['discount_amount'],2).' '.$p['devise']
+                        : 'NAN';
+
                 if (!empty($p['categories'])) {
                     $type = $p['categories'][0]['name'];
-                    $gc = $mapCat[$type] ?? $gc;
+                    $gc   = $mapCat[$type] ?? 'NAN';
+                    $cats = implode(', ', array_column($p['categories'],'name'));
+                } else {
+                    $type = 'NAN';
+                    $gc   = 'NAN';
+                    $cats = '';
                 }
-                $desc = $p['name'];
-                if (!empty($p['categories'])) {
-                    $cats = implode(', ',array_column($p['categories'],'name'));
+
+                $desc = $p['name'] ?? 'NAN';
+                if ($cats) {
                     $desc .= ' - Catégories: '.$cats;
                 }
                 if (!empty($p['discount_amount'])) {
@@ -58,28 +71,17 @@ class GoogleMerchantController extends Controller
                 }
 
                 fputcsv($out, [
-                    $p['id'],
-                    substr($p['name'],0,150),
-                    substr($desc,0,5000),
-                    $p['url'],
-                    $p['image'],
-                    'in stock',
-                    number_format($p['price'],2).' '.$p['devise'],
-                    'new',
-                    $p['brand_name'] ?? 'Hanaball',
-                    '',
-                    $p['slug'],
-                    empty($p['brand_name'])?'FALSE':'TRUE',
-                    $sale,
-                    $type,
-                    $gc
+                    $id, $title, substr($desc,0,5000), $link, $img,
+                    $avail, $price, $cond, $brand, $gtin,
+                    $mpn, $ident, $sale, $type, $gc
                 ]);
             }
+
             fclose($out);
-        }, 200, [
+        },200,[
             'Content-Type'=>'text/csv; charset=UTF-8',
-            'Content-Disposition'=>'attachment; filename="google_merchant_feed.csv"',
-            'Cache-Control'=>'public, max-age=1800'
+            'Content-Disposition'=>'inline; filename="google_merchant_feed.csv"',
+            'Cache-Control'=>'public, max-age=1800',
         ]);
     }
 }

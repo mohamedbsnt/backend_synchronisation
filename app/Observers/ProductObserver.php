@@ -3,45 +3,44 @@
 namespace App\Observers;
 
 use App\Models\Product;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Artisan;
 
 class ProductObserver
 {
     /**
-     * Lorsqu’un produit est créé
+     * Appelé quand un produit est créé
      */
     public function created(Product $product): void
     {
-        $this->generateGoogleFeed('created', $product);
+        Log::info('Nouveau produit créé', ['product_id' => $product->id, 'name' => $product->name]);
+        $this->syncWithGoogleMerchant();
     }
 
     /**
-     * Lorsqu’un produit est mis à jour
+     * Appelé quand un produit est mis à jour
      */
     public function updated(Product $product): void
     {
-        $this->generateGoogleFeed('updated', $product);
+        Log::info('Produit mis à jour', ['product_id' => $product->id, 'name' => $product->name]);
+        $this->syncWithGoogleMerchant();
     }
 
     /**
-     * Lorsqu’un produit est supprimé
+     * Appelé quand un produit est supprimé
      */
     public function deleted(Product $product): void
     {
-        $this->generateGoogleFeed('deleted', $product);
+        Log::info('Produit supprimé', ['product_id' => $product->id, 'name' => $product->name]);
+        $this->syncWithGoogleMerchant();
     }
 
     /**
-     * Fonction commune pour lancer la commande Artisan
+     * Déclenche la synchronisation avec Google Merchant
      */
-    protected function generateGoogleFeed(string $action, Product $product): void
+    private function syncWithGoogleMerchant(): void
     {
-        try {
-            Artisan::call('feed:generate-google');
-            Log::info("Feed Google Merchant régénéré après {$action} du produit ID {$product->id}.");
-        } catch (\Exception $e) {
-            Log::error("Erreur lors de la régénération du feed Google Merchant : " . $e->getMessage());
-        }
+        // Exécuter la commande en arrière-plan
+        Artisan::queue('google:sync-products');
     }
 }

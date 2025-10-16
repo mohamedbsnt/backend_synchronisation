@@ -7,17 +7,22 @@ use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
 class Kernel extends ConsoleKernel
 {
+    protected $commands = [
+        \App\Console\Commands\SyncGoogleMerchantProducts::class,
+    ];
+
     protected function schedule(Schedule $schedule): void
     {
-        // Génération automatique quotidienne à 2h00
-        $schedule->command('api:google')
-                 ->dailyAt('02:00')
-                 ->withoutOverlapping();
+        // Synchronisation quotidienne à 3h00 du matin
+        $schedule->command('google:sync-products')
+                 ->dailyAt('03:00')
+                 ->withoutOverlapping()
+                 ->emailOutputOnFailure('admin@hanaball.devaito.com');
     }
 
     protected function commands(): void
     {
-        $this->load(__DIR__.'/Commands');
+        $this->load(__DIR__ . '/Commands');
         require base_path('routes/console.php');
     }
 }

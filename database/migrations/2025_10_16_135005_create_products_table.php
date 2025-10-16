@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateProductsTable extends Migration
+return new class extends Migration
 {
     public function up()
     {
@@ -22,9 +22,13 @@ class CreateProductsTable extends Migration
             $table->string('brand_name')->nullable();
             $table->string('brand_logo')->nullable();
             $table->integer('stock')->default(0);
-            $table->string('availability')->default('in stock'); // or "out of stock"
+            $table->string('availability')->default('in stock');
             $table->string('google_product_category')->nullable();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
+
+            $table->index(['is_active', 'stock']);
+            $table->index('slug');
         });
     }
 
@@ -32,4 +36,4 @@ class CreateProductsTable extends Migration
     {
         Schema::dropIfExists('products');
     }
-}
+};
