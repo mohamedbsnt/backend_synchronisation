@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Http;
 
 Route::get('/', function () {
     return response()->json([
@@ -11,14 +12,15 @@ Route::get('/', function () {
     ]);
 });
 
-// Routes pour servir les fichiers statiques (optionnel)
-Route::get('/feed/google-products.csv', function(){
-    $path = public_path('feed/google-products.csv');
-    if (!file_exists($path)) {
-        abort(404, 'Feed not generated yet. Run: php artisan google:sync-products --save-file');
+Route::get('/api/google-all-products.csv', function () {
+    $url = config('app.url') . '/api/google-all-products';
+    $response = Http::timeout(30)->get($url);
+
+    if ($response->status() !== 200) {
+        abort($response->status(), 'Flux CSV inaccessible');
     }
-    return response()->file($path, [
-        'Content-Type' => 'text/csv; charset=UTF-8',
-        'Content-Disposition' => 'attachment; filename="hanaball-google-products.csv"'
-    ]);
+
+    return response($response->body(), 200)
+        ->header('Content-Type','text/csv; charset=UTF-8')
+        ->header('Content-Disposition','inline; filename="google-all-products.csv"');
 });

@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Models\Product;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Artisan;
+use App\Jobs\RegenerateFeeds; // Job pour générer les feeds sans bloquer
 
 class ProductObserver
 {
@@ -13,8 +14,12 @@ class ProductObserver
      */
     public function created(Product $product): void
     {
-        Log::info('Nouveau produit créé', ['product_id' => $product->id, 'name' => $product->name]);
-        $this->syncWithGoogleMerchant();
+        Log::info('🆕 Nouveau produit créé', [
+            'product_id' => $product->id,
+            'name' => $product->name
+        ]);
+
+        $this->syncFeeds();
     }
 
     /**
@@ -22,8 +27,12 @@ class ProductObserver
      */
     public function updated(Product $product): void
     {
-        Log::info('Produit mis à jour', ['product_id' => $product->id, 'name' => $product->name]);
-        $this->syncWithGoogleMerchant();
+        Log::info('✏️ Produit mis à jour', [
+            'product_id' => $product->id,
+            'name' => $product->name
+        ]);
+
+        $this->syncFeeds();
     }
 
     /**
@@ -31,16 +40,31 @@ class ProductObserver
      */
     public function deleted(Product $product): void
     {
-        Log::info('Produit supprimé', ['product_id' => $product->id, 'name' => $product->name]);
-        $this->syncWithGoogleMerchant();
+        Log::info('🗑️ Produit supprimé', [
+            'product_id' => $product->id,
+            'name' => $product->name
+        ]);
+
+        $this->syncFeeds();
     }
 
     /**
-     * Déclenche la synchronisation avec Google Merchant
+     * Déclenche la synchronisation avec les feeds Google et Facebook
      */
-    private function syncWithGoogleMerchant(): void
+    private function syncFeeds(): void
     {
-        // Exécuter la commande en arrière-plan
-        Artisan::queue('google:sync-products');
+        try {
+            // Option 1 : lancer la commande immédiatement
+            Artisan::call('feed:generate-google', ['--source' => 'api']);
+            Artisan::call('feed:generate-facebook', ['--source' => 'api']);
+
+            Log::info('✅ Feeds Google & Facebook régénérés avec succès via Artisan.');
+
+            // Option 2 (recommandée) : job asynchrone pour exécution en arrière-plan
+            // RegenerateFeeds::dispatch();
+
+        } catch (\Throwable $e) {
+            Log::error('❌ Erreur lors de la régénération des feeds : ' . $e->getMessage());
+        }
     }
 }
