@@ -24,3 +24,14 @@ Route::get('/api/google-all-products.csv', function () {
         ->header('Content-Type','text/csv; charset=UTF-8')
         ->header('Content-Disposition','inline; filename="google-all-products.csv"');
 });
+
+Route::get('/test-google-api', function() {
+    $client = new Google_Client();
+    $client->setAuthConfig(storage_path('app/google-service-account.json'));
+    $client->addScope(Google_Service_ShoppingContent::CONTENT);
+
+    return response()->json([
+        'authenticated' => !$client->isAccessTokenExpired(),
+        'credentials_loaded' => true
+    ]);
+});

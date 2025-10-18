@@ -1,28 +1,30 @@
 {
-    "name": "laravel/laravel",
+    "name": "mohamedbsnt/mon-projet-laravel",
     "type": "project",
-    "description": "The Laravel Framework.",
-    "keywords": ["framework", "laravel"],
+    "description": "Backend Laravel 9 pour synchronisation des produits",
+    "keywords": ["framework", "laravel", "ecommerce", "sync"],
     "license": "MIT",
     "require": {
-        "php": "^8.0.2",
-        "guzzlehttp/guzzle": "^7.2",
-        "laravel/framework": "^9.19",
+        "php": "^8.1",
+        "google/apiclient": "*",
+        "guzzlehttp/guzzle": "^7.4",
+        "laravel/framework": "^9.0",
         "laravel/sanctum": "^3.0",
-        "laravel/tinker": "^2.7"
+        "laravel/tinker": "^2.8"
     },
     "require-dev": {
-        "fakerphp/faker": "^1.9.1",
-        "laravel/pint": "^1.0",
-        "laravel/sail": "^1.0.1",
-        "mockery/mockery": "^1.4.4",
-        "nunomaduro/collision": "^6.1",
-        "phpunit/phpunit": "^9.5.10",
-        "spatie/laravel-ignition": "^1.0"
+        "spatie/ignition": "^1.1",
+        "fakerphp/faker": "^1.19",
+        "laravel/sail": "^1.18",
+        "mockery/mockery": "^1.5",
+        "nunomaduro/collision": "^6.2",
+        "phpunit/phpunit": "^9.6"
     },
     "autoload": {
         "psr-4": {
             "App\\": "app/",
+            "App\\Services\\": "app/Services/",
+            "App\\Console\\Commands\\": "app/Console/Commands/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
         }
@@ -38,7 +40,7 @@
             "@php artisan package:discover --ansi"
         ],
         "post-update-cmd": [
-            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+            "@php artisan vendor:publish --tag=laravel-assets --ansi"
         ],
         "post-root-package-install": [
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
@@ -55,10 +57,7 @@
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
-        "sort-packages": true,
-        "allow-plugins": {
-            "pestphp/pest-plugin": true
-        }
+        "sort-packages": true
     },
     "minimum-stability": "stable",
     "prefer-stable": true
