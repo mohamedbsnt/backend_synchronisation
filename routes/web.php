@@ -1,5 +1,5 @@
 <?php
-
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Http;
 
@@ -34,4 +34,14 @@ Route::get('/test-google-api', function() {
         'authenticated' => !$client->isAccessTokenExpired(),
         'credentials_loaded' => true
     ]);
+});
+
+
+
+Route::get('/feeds/google-merchant.csv', function () {
+    abort_unless(Storage::exists('feeds/google-merchant.csv'), 404);
+    return response(Storage::get('feeds/google-merchant.csv'), 200)
+        ->header('Content-Type', 'text/csv; charset=UTF-8')
+        ->header('Content-Disposition', 'inline; filename="google-merchant.csv"')
+        ->header('Cache-Control', 'public, max-age=600');
 });
